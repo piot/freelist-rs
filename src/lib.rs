@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) Peter Bjorklund. All rights reserved. https://github.com/piot/freelist-rs
+ * Licensed under the MIT License. See LICENSE in the project root for license information.
+ */
+
 use core::fmt;
 use std::{error::Error, fmt::Display};
 
@@ -23,11 +28,19 @@ impl Display for FreeListError {
 impl Error for FreeListError {}
 
 #[allow(unused)]
-impl<T: Copy + PartialEq + fmt::Debug + From<usize>> FreeList<T> {
+impl<T: Copy + PartialEq + fmt::Debug + TryFrom<usize>> FreeList<T> {
     pub fn new(count: usize) -> Self {
         let mut free_numbers = Vec::with_capacity(count);
         for i in (0..count).rev() {
-            free_numbers.push(i.into());
+            if let Ok(val) = T::try_from(i) {
+                free_numbers.push(val);
+            } else {
+                panic!(
+                    "The type `{}` cannot represent the number `{}`",
+                    std::any::type_name::<T>(),
+                    i
+                );
+            }
         }
         Self { free_numbers }
     }
